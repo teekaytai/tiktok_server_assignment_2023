@@ -2,17 +2,39 @@ package main
 
 import (
 	"context"
-	"math/rand"
-
+	"fmt"
 	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 // IMServiceImpl implements the last service interface defined in the IDL.
 type IMServiceImpl struct{}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
+	if err := validateSendRequest(req); err != nil {
+		return nil, err
+	}
+
+	message := &Message{
+		Sender:    req.Message.GetSender(),
+		Text:      req.Message.GetText(),
+		Timestamp: time.Now().Unix(),
+	}
+
+	roomId, err := chatToRoomId(req.Message.GetChat())
+	if err != nil {
+		return nil, err
+	}
+
+	err = rdb.SaveMessage(ctx, roomId, message)
+	if err != nil {
+		return nil, err
+	}
+
 	resp := rpc.NewSendResponse()
-	resp.Code, resp.Msg = areYouLucky()
+	resp.Code, resp.Msg = 0, "success"
 	return resp, nil
 }
 
@@ -28,4 +50,38 @@ func areYouLucky() (int32, string) {
 	} else {
 		return 500, "oops"
 	}
+}
+
+func validateSendRequest(req *rpc.SendRequest) error {
+	users := strings.Split(req.Message.GetChat(), ":")
+	if len(users) != 2 {
+		err := fmt.Errorf("invalid chat ID '%s', should be in the format of user1:user2", req.Message.GetChat())
+		return err
+	}
+
+	sender := req.Message.GetSender()
+	if sender != users[0] && sender != users[1] {
+		err := fmt.Errorf("sender '%s' is not in the chat room", sender)
+		return err
+	}
+
+	return nil
+}
+
+func chatToRoomId(chat string) (string, error) {
+	var roomId string
+
+	users := strings.Split(strings.ToLower(chat), ":")
+	if len(users) != 2 {
+		err := fmt.Errorf("invalid chat ID '%s', should be in the format user1:user2", chat)
+		return "", err
+	}
+
+	user1, user2 := users[0], users[1]
+	if user1 > user2 {
+		user1, user2 = user2, user1
+	}
+	roomId = fmt.Sprintf("%s:%s", user1, user2)
+
+	return roomId, nil
 }
