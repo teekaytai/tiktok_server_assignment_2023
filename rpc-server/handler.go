@@ -39,8 +39,46 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 }
 
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
-	resp := rpc.NewPullResponse()
-	resp.Code, resp.Msg = areYouLucky()
+	roomId, err := chatToRoomId(req.GetChat())
+	if err != nil {
+		return nil, err
+	}
+
+	start := req.GetCursor()
+	limit := req.GetLimit()
+	end := start + int64(limit) // Get limit + 1 messages to check if more messages available
+
+	messages, err := rdb.GetMessagesByRoomId(ctx, roomId, start, end, req.GetReverse())
+	if err != nil {
+		return nil, err
+	}
+
+	respMessages := make([]*rpc.Message, 0)
+	hasMore := false
+	var nextCursor int64 = 0
+	for i, msg := range messages {
+		if int32(i) >= limit {
+			hasMore = true
+			nextCursor = end
+			break
+		}
+		respMsg := &rpc.Message{
+			Chat:     req.GetChat(),
+			Text:     msg.Text,
+			Sender:   msg.Sender,
+			SendTime: msg.Timestamp,
+		}
+		respMessages = append(respMessages, respMsg)
+	}
+
+	resp := &rpc.PullResponse{
+		Messages:   respMessages,
+		Code:       0,
+		Msg:        "success",
+		HasMore:    &hasMore,
+		NextCursor: &nextCursor,
+	}
+
 	return resp, nil
 }
 
