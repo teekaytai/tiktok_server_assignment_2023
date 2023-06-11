@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -22,4 +23,56 @@ func (c *RedisClient) InitClient(ctx context.Context, address, password string) 
 
 	c.client = r
 	return nil
+}
+
+func (c *RedisClient) SaveMessage(ctx context.Context, roomId string, message *Message) error {
+	msgJson, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	member := &redis.Z{
+		Score:  float64(message.Timestamp),
+		Member: msgJson,
+	}
+
+	_, err = c.client.ZAdd(ctx, roomId, *member).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *RedisClient) GetMessagesByRoomId(ctx context.Context, roomId string, startTime, endTime int64, reverse bool) ([]*Message, error) {
+	var (
+		rawMessages []string
+		messages    []*Message
+		err         error
+	)
+
+	if reverse {
+		// Messages in reverse chronological order
+		rawMessages, err = c.client.ZRevRange(ctx, roomId, startTime, endTime).Result()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Messages in chronological order
+		rawMessages, err = c.client.ZRange(ctx, roomId, startTime, endTime).Result()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, msgJson := range rawMessages {
+		msg := &Message{}
+		err := json.Unmarshal([]byte(msgJson), msg)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+
+	return messages, nil
 }
