@@ -11,11 +11,10 @@ import (
 	rpc "github.com/teekaytai/tiktok_server_assignment_2023/rpc-server/kitex_gen/rpc/imservice"
 )
 
-var rdb = &RedisClient{}
-
 func main() {
 	ctx := context.Background()
 
+	rdb := &RedisClient{}
 	err := rdb.InitClient(ctx, "redis:6379", "")
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to initialise Redis client, err: %v", err)
@@ -27,7 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	svr := rpc.NewServer(new(IMServiceImpl), server.WithRegistry(r), server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+	svr := rpc.NewServer(&IMServiceImpl{rdb}, server.WithRegistry(r), server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
 		ServiceName: "demo.rpc.server",
 	}))
 

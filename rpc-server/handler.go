@@ -9,7 +9,9 @@ import (
 )
 
 // IMServiceImpl implements the last service interface defined in the IDL.
-type IMServiceImpl struct{}
+type IMServiceImpl struct {
+	db DbClient
+}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
 	if err := validateSendRequest(req); err != nil {
@@ -27,7 +29,7 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 		return nil, err
 	}
 
-	err = rdb.SaveMessage(ctx, roomId, message)
+	err = s.db.SaveMessage(ctx, roomId, message)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +49,7 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 	limit := req.GetLimit()
 	end := start + int64(limit) // Get limit + 1 messages to check if more messages available
 
-	messages, err := rdb.GetMessagesByRoomId(ctx, roomId, start, end, req.GetReverse())
+	messages, err := s.db.GetMessagesByRoomId(ctx, roomId, start, end, req.GetReverse())
 	if err != nil {
 		return nil, err
 	}
