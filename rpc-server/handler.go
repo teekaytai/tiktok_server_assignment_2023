@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
+	"github.com/teekaytai/tiktok_server_assignment_2023/rpc-server/kitex_gen/rpc"
 	"math/rand"
 	"strings"
 	"time"

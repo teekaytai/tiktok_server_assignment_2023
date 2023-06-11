@@ -1,4 +1,4 @@
-module github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server
+module github.com/teekaytai/tiktok_server_assignment_2023/rpc-server
 
 go 1.18
 

@@ -5,15 +5,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/TikTokTechImmersion/assignment_demo_2023/http-server/kitex_gen/rpc"
-	"github.com/TikTokTechImmersion/assignment_demo_2023/http-server/kitex_gen/rpc/imservice"
-	"github.com/TikTokTechImmersion/assignment_demo_2023/http-server/proto_gen/api"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/cloudwego/kitex/client"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	"github.com/teekaytai/tiktok_server_assignment_2023/http-server/kitex_gen/rpc"
+	"github.com/teekaytai/tiktok_server_assignment_2023/http-server/kitex_gen/rpc/imservice"
+	"github.com/teekaytai/tiktok_server_assignment_2023/http-server/proto_gen/api"
 )
 
 var cli imservice.Client

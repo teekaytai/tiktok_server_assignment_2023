@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	rpc "github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc/imservice"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	etcd "github.com/kitex-contrib/registry-etcd"
+	rpc "github.com/teekaytai/tiktok_server_assignment_2023/rpc-server/kitex_gen/rpc/imservice"
 )
 
 var rdb = &RedisClient{}
