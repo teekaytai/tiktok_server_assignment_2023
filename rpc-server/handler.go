@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/teekaytai/tiktok_server_assignment_2023/rpc-server/kitex_gen/rpc"
 	"strings"
-	"time"
 )
 
 // IMServiceImpl implements the last service interface defined in the IDL.
@@ -21,7 +20,7 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 	message := &Message{
 		Sender:    req.Message.GetSender(),
 		Text:      req.Message.GetText(),
-		Timestamp: time.Now().Unix(),
+		Timestamp: req.Message.GetSendTime(),
 	}
 
 	roomId, err := chatToRoomId(req.Message.GetChat())
