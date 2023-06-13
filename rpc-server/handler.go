@@ -96,7 +96,7 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 func validateSendRequest(req *rpc.SendRequest) error {
 	users := strings.Split(req.Message.GetChat(), ":")
 	if len(users) != 2 {
-		err := fmt.Errorf("invalid chat ID '%s', should be in the format of user1:user2", req.Message.GetChat())
+		err := fmt.Errorf("invalid chat ID '%s', should be in the format user1:user2", req.Message.GetChat())
 		return err
 	}
 
