@@ -13,8 +13,12 @@ type IMServiceImpl struct {
 }
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
+	resp := rpc.NewSendResponse()
+
 	if err := validateSendRequest(req); err != nil {
-		return nil, err
+		resp.Code = -1
+		resp.Msg = err.Error()
+		return resp, err
 	}
 
 	message := &Message{
@@ -25,23 +29,31 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 
 	roomId, err := chatToRoomId(req.Message.GetChat())
 	if err != nil {
-		return nil, err
+		resp.Code = -1
+		resp.Msg = err.Error()
+		return resp, err
 	}
 
 	err = s.db.SaveMessage(ctx, roomId, message)
 	if err != nil {
-		return nil, err
+		resp.Code = -1
+		resp.Msg = err.Error()
+		return resp, err
 	}
 
-	resp := rpc.NewSendResponse()
-	resp.Code, resp.Msg = 0, "success"
+	resp.Code = 0
+	resp.Msg = "success"
 	return resp, nil
 }
 
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
+	resp := rpc.NewPullResponse()
+
 	roomId, err := chatToRoomId(req.GetChat())
 	if err != nil {
-		return nil, err
+		resp.Code = -1
+		resp.Msg = err.Error()
+		return resp, err
 	}
 
 	start := req.GetCursor()
@@ -50,7 +62,9 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 
 	messages, err := s.db.GetMessagesByRoomId(ctx, roomId, start, end, req.GetReverse())
 	if err != nil {
-		return nil, err
+		resp.Code = -1
+		resp.Msg = err.Error()
+		return resp, err
 	}
 
 	respMessages := make([]*rpc.Message, 0)
@@ -71,14 +85,11 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 		respMessages = append(respMessages, respMsg)
 	}
 
-	resp := &rpc.PullResponse{
-		Messages:   respMessages,
-		Code:       0,
-		Msg:        "success",
-		HasMore:    &hasMore,
-		NextCursor: &nextCursor,
-	}
-
+	resp.Messages = respMessages
+	resp.Code = 0
+	resp.Msg = "success"
+	resp.HasMore = &hasMore
+	resp.NextCursor = &nextCursor
 	return resp, nil
 }
 
