@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/teekaytai/tiktok_server_assignment_2023/rpc-server/kitex_gen/rpc"
@@ -20,19 +21,77 @@ func TestIMServiceImpl_Send(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "success",
+			name: "success1",
 			args: args{
 				ctx: context.Background(),
-				req: &rpc.SendRequest{},
+				req: &rpc.SendRequest{
+					Message: &rpc.Message{
+						Chat:     "user1:user2",
+						Text:     "Test text",
+						Sender:   "user1",
+						SendTime: time.Now().Unix(),
+					},
+				},
 			},
 			wantErr: nil,
+		},
+		{
+			name: "success2",
+			args: args{
+				ctx: context.Background(),
+				req: &rpc.SendRequest{
+					Message: &rpc.Message{
+						Chat:     "user3:user4",
+						Text:     "Blah blah blah",
+						Sender:   "user4",
+						SendTime: time.Now().Unix(),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "invalidChatIdError",
+			args: args{
+				ctx: context.Background(),
+				req: &rpc.SendRequest{
+					Message: &rpc.Message{
+						Chat:     "user1:user2:user3",
+						Text:     "Invalid chat ID",
+						Sender:   "user1",
+						SendTime: time.Now().Unix(),
+					},
+				},
+			},
+			wantErr: fmt.Errorf("invalid chat ID 'user1:user2:user3', should be in the format user1:user2"),
+		},
+		{
+			name: "senderNotInRoomError",
+			args: args{
+				ctx: context.Background(),
+				req: &rpc.SendRequest{
+					Message: &rpc.Message{
+						Chat:     "user1:user2",
+						Text:     "Sender not in room",
+						Sender:   "userX",
+						SendTime: time.Now().Unix(),
+					},
+				},
+			},
+			wantErr: fmt.Errorf("sender 'userX' is not in the chat room"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &IMServiceImpl{}
+			mockDb := &MockDbClient{}
+			err := mockDb.InitClient(tt.args.ctx, "", "")
+			s := &IMServiceImpl{mockDb}
 			got, err := s.Send(tt.args.ctx, tt.args.req)
-			assert.True(t, errors.Is(err, tt.wantErr))
+			if tt.wantErr == nil {
+				assert.Nil(t, err)
+			} else {
+				assert.True(t, err != nil && err.Error() == tt.wantErr.Error())
+			}
 			assert.NotNil(t, got)
 		})
 	}
